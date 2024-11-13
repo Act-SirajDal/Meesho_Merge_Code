@@ -48,7 +48,8 @@ class MeeshoFSpider(scrapy.Spider):
 
     def start_requests(self) -> Iterable[Request]:
 
-        query = f"select `meesho_pid` FROM {db.db_links_table} where status='pending' and id between {self.start} and {self.end} limit 200;"
+        # query = f"select `meesho_pid` FROM {db.db_links_table} where status='pending' and id between {self.start} and {self.end} limit 200;"
+        query = f"select `meesho_pid` FROM {db.db_links_table} where status='pending' and id between {self.start} and {self.end};"
         self.cursor.execute(query)
         query_results = self.cursor.fetchall()
         self.logger.info(f"\n\n\nTotal Results ...{len(query_results)}\n\n\n", )
@@ -165,4 +166,4 @@ class MeeshoFSpider(scrapy.Spider):
 
 
 if __name__ == '__main__':
-    execute('scrapy crawl meesho_pro_data_final -a start=1 -a end=1000000'.split())
+    execute('scrapy crawl meesho_pro_data_final -a start=1 -a end=1'.split())
