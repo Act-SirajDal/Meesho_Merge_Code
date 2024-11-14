@@ -22,7 +22,8 @@ class MeeshoFSpider(scrapy.Spider):
     folder_location = f"C:/Meesho/"
     errors = list()
 
-    DATE = str(datetime.now().strftime("%Y%m%d"))
+    # DATE = str(datetime.now().strftime("%Y%m%d"))
+    DATE = '20241113'
 
     def __init__(self, name=None, start=0, end=100000, dbname=DATE, **kwargs):
         super().__init__(name, **kwargs)
@@ -84,7 +85,7 @@ class MeeshoFSpider(scrapy.Spider):
 
         i = kwargs['page_name']
 
-        status = "Done"
+        status = "pending"
         data = response.body.split(b'id="__NEXT_DATA__" type="application/json">')[1].split(b"</script>")[0]
         data = json.loads(data)['props']['pageProps']['initialState']['product']['details']['data']
         if data:
@@ -99,6 +100,7 @@ class MeeshoFSpider(scrapy.Spider):
                 data = page.split(b'id="__NEXT_DATA__" type="application/json">')[1].split(b"</script>")[0]
                 data = json.loads(data)['props']['pageProps']['initialState']['product']['details']['data']
                 if data:
+                    status = "Done"
                     product_price = data['price']
                     mrp = data['price']
                     if 'mrp_details' in data:
@@ -147,23 +149,39 @@ class MeeshoFSpider(scrapy.Spider):
         # print(update_query)
         self.cursor.execute(update_query)
 
-    def download_and_get_size(self,url, i):
+    def download_and_get_size(self, url, i):
         image_name = f"{self.folder_location}image/{i}.webp"
-        if os.path.exists(image_name):
-            data = open(image_name, "rb").read()
-        else:
-            print('Downloading...')
-            resp = requests.get(url)
-            data = resp.content
-            with open(f"{self.folder_location}image/{i}.webp", "wb") as image:
-                image.write(data)
+        try:
+            if os.path.exists(image_name):
+                # Read the image data if it already exists
+                data = open(image_name, "rb").read()
+            else:
+                print("Downloading...")
+                # Download the image
+                resp = requests.get(url)
+                data = resp.content
+                # Save the image
+                with open(image_name, "wb") as image_file:
+                    image_file.write(data)
 
-        p = ImageFile.Parser()
-        p.feed(data)
-        size = "x".join([str(i) for i in p.image.size])
+            # Parse the image
+            p = ImageFile.Parser()
+            p.feed(data)
+            image = p.close()
+            size = "x".join([str(dim) for dim in image.size])
+            print("Image size:", size)
+            return size
 
-        return size
+        except Exception as e:
+            print("Error parsing image:", e)
+            # Remove the file if parsing fails
+            if os.path.exists(image_name):
+                try:
+                    os.remove(image_name)
+                    print(f"Deleted corrupted image: {image_name}")
+                except Exception as delete_error:
+                    print(f"Failed to delete image: {delete_error}")
 
 
 if __name__ == '__main__':
-    execute('scrapy crawl meesho_pro_data_final -a start=1 -a end=1'.split())
+    execute('scrapy crawl meesho_pro_data_final -a start=1 -a end=255000'.split())
