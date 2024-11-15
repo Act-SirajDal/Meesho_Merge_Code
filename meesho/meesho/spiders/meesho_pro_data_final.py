@@ -12,6 +12,7 @@ from scrapy import Request, Spider
 from scrapy.cmdline import execute
 import meesho.db_config as db
 from PIL import ImageFile
+import gzip
 
 
 class MeeshoFSpider(scrapy.Spider):
@@ -22,8 +23,7 @@ class MeeshoFSpider(scrapy.Spider):
     folder_location = f"C:/Meesho/"
     errors = list()
 
-    # DATE = str(datetime.now().strftime("%Y%m%d"))
-    DATE = '20241113'
+    DATE = str(datetime.now().strftime("%Y%m%d"))
 
     def __init__(self, name=None, start=0, end=100000, dbname=DATE, **kwargs):
         super().__init__(name, **kwargs)
@@ -35,7 +35,7 @@ class MeeshoFSpider(scrapy.Spider):
         self.run_type = "master" if "master" in db.db_name else "normal"
 
         if db.db_name == "sy_meesho":
-            self.folder_location = f"C:/sy_Meesho/"
+            self.folder_location = f"D:/sy_Meesho/"
 
         self.folder_location = self.folder_location + f"pages_{self.run_type}/{self.timestamp}/new_task_html/"
 
@@ -83,7 +83,8 @@ class MeeshoFSpider(scrapy.Spider):
             yield request
             return None
 
-        i = kwargs['page_name']
+        i_o = kwargs['page_name']
+        i = str(i_o).replace("\\","")
 
         status = "pending"
         data = response.body.split(b'id="__NEXT_DATA__" type="application/json">')[1].split(b"</script>")[0]
@@ -95,9 +96,15 @@ class MeeshoFSpider(scrapy.Spider):
                 supplier = data['suppliers'][0]
                 supplier_name = str(supplier['id'])
 
-                open(self.folder_location + i + f"_{supplier_name}.html", "wb").write(response.body)
-                page = open(self.folder_location + i + f"_{supplier_name}.html", "rb").read()
-                data = page.split(b'id="__NEXT_DATA__" type="application/json">')[1].split(b"</script>")[0]
+                page = ''
+                file_path = self.folder_location + i + f"_{supplier_name}.html.gz"
+                # Writing the Gzip file safely
+                with gzip.open(file_path, "wb") as f:
+                    f.write(response.body)
+                with gzip.open(file_path, "rb") as f:
+                    page = f.read().decode("utf-8")
+                    print(type(page))
+                data = page.split('id="__NEXT_DATA__" type="application/json">')[1].split("</script>")[0]
                 data = json.loads(data)['props']['pageProps']['initialState']['product']['details']['data']
                 if data:
                     status = "Done"
@@ -134,20 +141,28 @@ class MeeshoFSpider(scrapy.Spider):
                     item['Seller_Rating_MEESHO'] = data['suppliers'][0]['average_rating']
 
                 item['Delivery_Date_MEESHO'] = "N/A"
+                item['Pincode'] = ''
+                item['City'] = ''
+                item['No_Delivery_Days_from_Scrape_Date_MEESHO'] = ''
+                item['Price_in_Cart__After_Applying_Coupon_MEESHO'] = ''
                 print(data['product_id'])
                 yield item
             else:
                 status = "This product is out of stock"
+                update_query = f"update {db.db_links_table} set `status` = '{status}' where `meesho_pid` = '{i_o}'"
+                # print(update_query)
+                self.cursor.execute(update_query)
+                self.con.commit()
         else:
             status = "Not Found page"
+            update_query = f"update {db.db_links_table} set `status` = '{status}' where `meesho_pid` = '{i_o}'"
+            self.cursor.execute(update_query)
+            self.con.commit()
 
         # TODO: DON'T UNCOMMENT THIS UNTIL GET CONFIRMATION FROM DEEP
         # if f'"in_stock":false,"product_id":"{i}"':
         #     status = "Out of Stock while add to cart"
 
-        update_query = f"update {db.db_links_table} set `status` = '{status}' where `meesho_pid` = '{i}'"
-        # print(update_query)
-        self.cursor.execute(update_query)
 
     def download_and_get_size(self, url, i):
         image_name = f"{self.folder_location}image/{i}.webp"
@@ -182,6 +197,6 @@ class MeeshoFSpider(scrapy.Spider):
                 except Exception as delete_error:
                     print(f"Failed to delete image: {delete_error}")
 
-
 if __name__ == '__main__':
-    execute('scrapy crawl meesho_pro_data_final -a start=1 -a end=255000'.split())
+    # execute('scrapy crawl meesho_pro_data_final -a start=1 -a end=10000000'.split())
+    execute('scrapy crawl meesho_pro_data_final -a start=174000 -a end=174000'.split())

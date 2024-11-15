@@ -18,21 +18,25 @@ class MeeshoPipeline:
         create_table_pdp = f'''
             CREATE TABLE IF NOT EXISTS `meesho_pdp_data_{DATE}` (
                 `id` INT NOT NULL AUTO_INCREMENT,
-                `SKU_id_MEESHO` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+                `SKU_id_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `Count_of_Images_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `Delivery_Charges_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `Discount_percent_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `Display_Price_On_PDP_Price_After_Discount_MEESHO` VARCHAR(255) DEFAULT NULL,
-                `Image_Url_MEESHO` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+                `Image_Url_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `In_Stock_Status_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `MRP_MEESHO` VARCHAR(255) DEFAULT NULL,
-                `Pixel_Size_of_the_Main_Image_MEESHO` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+                `Pixel_Size_of_the_Main_Image_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `Volume_of_Product_Rating_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `Product_Ratings_MEESHO` VARCHAR(255) DEFAULT NULL,
-                `Product_title_MEESHO` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-                `Seller_Display_Name_MEESHO` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+                `Product_title_MEESHO` text DEFAULT NULL,
+                `Seller_Display_Name_MEESHO` text DEFAULT NULL,
                 `Seller_Rating_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `Delivery_Date_MEESHO` VARCHAR(255) DEFAULT NULL,
+                `Pincode` VARCHAR(255) DEFAULT NULL,
+                `City` VARCHAR(255) DEFAULT NULL,
+                `No_Delivery_Days_from_Scrape_Date_MEESHO` VARCHAR(255) DEFAULT NULL,
+                `Price_in_Cart__After_Applying_Coupon_MEESHO` VARCHAR(255) DEFAULT NULL,
                 PRIMARY KEY (`id`)
             );
         '''
@@ -69,13 +73,19 @@ class MeeshoPipeline:
 
                 try:
                     # status = "Done"
+                    values_data = item.values()
+                    row_dict = dict(zip(item.keys(), values_data))
+                    print(row_dict)
+                    sku_id = row_dict.get('SKU_id_MEESHO')
                     spider.cursor.execute(insert_db, tuple(item.values()))
                     spider.logger.info(f'Data Inserted...')
-                except IntegrityError as e:
-                    print("IntegrityError....",e)
+                    update_query = f"update {db.db_links_table} set `status` = 'Done' where `meesho_pid` = '{sku_id}'"
+                    spider.cursor.execute(update_query)
+                    spider.con.commit()
+                except Exception as e:
+                    print(e)
             except Exception as e:
                 print(e)
-        spider.con.commit()
 
         if isinstance(item, MeeshoItemPCdata):
             try:
@@ -100,8 +110,9 @@ class MeeshoPipeline:
                     spider.logger.info(f'Data Inserted...')
                     update_query = f"update {db.db_links_table} set `status_{spider.pincode}` = 'Done' where `meesho_pid` = '{sku_id}'"
                     spider.cursor.execute(update_query)
-                except IntegrityError as e:
-                    print("IntegrityError....",e)
+                    spider.con.commit()
+                except Exception as e:
+                    print(e)
             except Exception as e:
                 print(e)
-
+        return item
