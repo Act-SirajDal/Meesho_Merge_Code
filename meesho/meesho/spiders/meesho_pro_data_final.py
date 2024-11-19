@@ -23,7 +23,8 @@ class MeeshoFSpider(scrapy.Spider):
     folder_location = f"C:/Meesho/"
     errors = list()
 
-    DATE = str(datetime.now().strftime("%Y%m%d"))
+    DATE = '20241120'
+    # DATE = str(datetime.now().strftime("%Y%m%d"))
 
     def __init__(self, name=None, start=0, end=100000, dbname=DATE, **kwargs):
         super().__init__(name, **kwargs)
@@ -35,7 +36,7 @@ class MeeshoFSpider(scrapy.Spider):
         self.run_type = "master" if "master" in db.db_name else "normal"
 
         if db.db_name == "sy_meesho":
-            self.folder_location = f"D:/sy_Meesho/"
+            self.folder_location = f"C:/sy_Meesho/"
 
         self.folder_location = self.folder_location + f"pages_{self.run_type}/{self.timestamp}/new_task_html/"
 
@@ -116,6 +117,7 @@ class MeeshoFSpider(scrapy.Spider):
 
                     item = MeeshoItem()
                     item['SKU_id_MEESHO'] = data['product_id']
+                    item['Supplier_id_MEESHO'] = supplier_name
                     item['Count_of_Images_MEESHO'] = len(data['images'])
                     item['Delivery_Charges_MEESHO'] = data['shipping']['charges']
                     item['Discount_percent_MEESHO'] = discount
@@ -150,7 +152,6 @@ class MeeshoFSpider(scrapy.Spider):
             else:
                 status = "This product is out of stock"
                 update_query = f"update {db.db_links_table} set `status` = '{status}' where `meesho_pid` = '{i_o}'"
-                # print(update_query)
                 self.cursor.execute(update_query)
                 self.con.commit()
         else:
@@ -162,7 +163,6 @@ class MeeshoFSpider(scrapy.Spider):
         # TODO: DON'T UNCOMMENT THIS UNTIL GET CONFIRMATION FROM DEEP
         # if f'"in_stock":false,"product_id":"{i}"':
         #     status = "Out of Stock while add to cart"
-
 
     def download_and_get_size(self, url, i):
         image_name = f"{self.folder_location}image/{i}.webp"
@@ -197,6 +197,7 @@ class MeeshoFSpider(scrapy.Spider):
                 except Exception as delete_error:
                     print(f"Failed to delete image: {delete_error}")
 
+
 if __name__ == '__main__':
     # execute('scrapy crawl meesho_pro_data_final -a start=1 -a end=10000000'.split())
-    execute('scrapy crawl meesho_pro_data_final -a start=174000 -a end=174000'.split())
+    execute('scrapy crawl meesho_pro_data_final -a start=1 -a end=10'.split())

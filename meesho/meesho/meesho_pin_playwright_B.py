@@ -80,8 +80,11 @@ def main(pstart, pend,pincode):
 # Entry point of the script
 if __name__ == '__main__':
     # Get `pstart` and `pend` from command-line arguments
-    pstart = int(sys.argv[1])
-    pend = int(sys.argv[2])
-    pincode = str(sys.argv[3])
+    # pstart = int(sys.argv[1])
+    # pend = int(sys.argv[2])
+    # pincode = str(sys.argv[3])
+    pstart = 1
+    pend = 1500
+    pincode = '560001'
     print(pstart,pend,pincode)
     main(pstart, pend, pincode)

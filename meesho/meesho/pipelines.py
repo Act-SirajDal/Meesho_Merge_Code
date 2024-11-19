@@ -11,7 +11,8 @@ from meesho.items import *
 import meesho.db_config as db
 from datetime import datetime
 
-DATE = str(datetime.now().strftime("%Y%m%d"))
+# DATE = str(datetime.now().strftime("%Y%m%d"))
+DATE = '20241120'
 
 class MeeshoPipeline:
     def process_item(self, item, spider):
@@ -19,6 +20,7 @@ class MeeshoPipeline:
             CREATE TABLE IF NOT EXISTS `meesho_pdp_data_{DATE}` (
                 `id` INT NOT NULL AUTO_INCREMENT,
                 `SKU_id_MEESHO` VARCHAR(255) DEFAULT NULL,
+                `Supplier_id_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `Count_of_Images_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `Delivery_Charges_MEESHO` VARCHAR(255) DEFAULT NULL,
                 `Discount_percent_MEESHO` VARCHAR(255) DEFAULT NULL,
