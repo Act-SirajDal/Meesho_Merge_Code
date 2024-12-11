@@ -10,6 +10,7 @@ import dateparser
 import requests
 import sys
 from evpn import ExpressVpnApi
+import cloudscraper
 
 def VPN_Change():
     api = ExpressVpnApi()# Connecting to VPN (BRAZIL)
@@ -33,6 +34,11 @@ proxy = {
     'http':'http://9dbe950ef6284a5da9e7749db9f7cbd1:@api.zyte.com:8011/',
     'https': 'http://9dbe950ef6284a5da9e7749db9f7cbd1:@api.zyte.com:8011/'
 }
+OXYLABS_PROXY = {
+    "http": "http://jaimingact_sawbL:Act_oxyproxy123@realtime.oxylabs.io:60000",
+    "https": "http://jaimingact_sawbL:Act_oxyproxy123@realtime.oxylabs.io:60000"
+}
+
 start = 1
 end = 50000
 
@@ -73,43 +79,49 @@ def main(pstart, pend):
                 pincode = pin[0]
                 city = pin[1]
                 param = {
-                    'dest_pin' : pincode,
-                    'product_id' : product_id,
-                    'supplier_id' : supplier_id,
+                    # 'dest_pin' : pincode,
+                    # 'product_id' : product_id,
+                    # 'supplier_id' : supplier_id,
                 }
                 # print(param)
-                url = f'http://prod.meeshoapi.com/api/1.0/anonymous/shipping'
-                # url = f'https://prod.meeshoapi.com/api/1.0/anonymous/shipping?dest_pin=560001&product_id=294205887&quantity=1&supplier_id=1057963'
+                # url = f'http://prod.meeshoapi.com/api/1.0/anonymous/shipping'
+                scraper = cloudscraper.create_scraper()
+                url = f'https://prod.meeshoapi.com/api/1.0/anonymous/shipping?dest_pin=560001&product_id=294205887&quantity=1&supplier_id=1057963'
 
                 headers = {
-                    'Accept-Encoding': 'gzip',
-                    'APP-CLIENT-ID': 'android',
-                    'APP-ISO-LANGUAGE-CODE': 'en',
-                    'APP-SDK-VERSION': '28',
+                    # 'Accept-Encoding': 'gzip',
+                    # 'APP-CLIENT-ID': 'android',
+                    # 'APP-ISO-LANGUAGE-CODE': 'en',
+                    # 'APP-SDK-VERSION': '28',
                     # 'App-Session-Id': '877dbf0c-bb00-4743-a465-e8e9d341aa63',
                     # 'APP-USER-LOCATION': 'eyJsYXQiOiIxOC45NDc0IiwibG9uZyI6IjcyLjgxMzgiLCJwaW5jb2RlIjoiNDAwMDAxIiwiY2l0eSI6Ik11bWJhaSIsImFkZHJlc3NfaWQiOm51bGx9',
-                    'App-Version': '21.0',
-                    'App-Version-Code': '632',
-                    'Application-Id': 'com.meesho.supply',
+                    # 'App-Version': '21.0',
+                    # 'App-Version-Code': '632',
+                    # 'Application-Id': 'com.meesho.supply',
                     'Authorization': '32c4d8137cn9eb493a1921f203173080',
-                    'Connection': 'Keep-Alive',
-                    'Country-Iso': 'in',
-                    'Host': 'prod.meeshoapi.com',
-                    'Instance-Id': '3225712037ce488294a2460b24ef7cd3',
-                    'MEESHO-USER-CONTEXT': 'anonymous',
-                    'SHIELD-SESSION-ID': '',
-                    'User-Agent': random.choice(user_agent),
+                    # 'Connection': 'Keep-Alive',
+                    # 'Country-Iso': 'in',
+                    # 'Host': 'prod.meeshoapi.com',
+                    # 'Instance-Id': '3225712037ce488294a2460b24ef7cd3',
+                    # 'MEESHO-USER-CONTEXT': 'anonymous',
+                    # 'SHIELD-SESSION-ID': '',
+                    # 'User-Agent': random.choice(user_agent),
                     'Xo': 'eyJ0eXBlIjoiY29tcG9zaXRlIn0=.eyJqd3QiOiJleUpvZEhSd2N6b3ZMMjFsWlhOb2J5NWpiMjB2ZG1WeWMybHZiaUk2SWpFaUxDSm9kSFJ3Y3pvdkwyMWxaWE5vYnk1amIyMHZhWE52WDJOdmRXNTBjbmxmWTI5a1pTSTZJa2xPSWl3aVlXeG5Jam9pU0ZNeU5UWWlmUS5leUpwWVhRaU9qRTNNekU1T1RNME9Ua3NJbVY0Y0NJNk1UZzRPVFkzTXpRNU9Td2lhSFIwY0hNNkx5OXRaV1Z6YUc4dVkyOXRMMmx1YzNSaGJtTmxYMmxrSWpvaU16SXlOVGN4TWpBek4yTmxORGc0TWprMFlUSTBOakJpTWpSbFpqZGpaRE1pTENKb2RIUndjem92TDIxbFpYTm9ieTVqYjIwdllXNXZibmx0YjNWelgzVnpaWEpmYVdRaU9pSTJaRFE0T0RRNU15MWlZelkxTFRRNFltVXRPRFJqTVMwd1ltSTFZalF6T1RCa01EVWlmUS42TUJOSnhkbFVHWmEtR21xcDFjWWZ3YkNMVDNnVlF4dnhuMWdUQ2lKN0lBIiwieG8iOm51bGx9',
                 }
+
                 time.sleep(1)
+
                 # req = requests.get(url=url,params=param, headers=headers,proxies=proxy,verify=False)
-                req = requests.get(url=url,params=param, headers=headers)
+                # req = requests.get(url=url,params=param, headers=headers)
+                req = scraper.get(url=url,params=param, headers=headers)
                 print(req.text)
                 print(req.status_code)
                 if req.status_code != 200:
+                    time.sleep(5)
                     req = requests.get(url=url,params=param, headers=headers,proxies=proxy,verify=False)
                     if req.status_code != 200:
-                        # VPN_Change()
+                        VPN_Change()
+                        time.sleep(5)
                         req = requests.get(url=url, params=param, headers=headers, proxies=proxy, verify=False)
                 page_id = str(sku_id) + f'_{pincode}'
                 if 'estimate' in req.text:
